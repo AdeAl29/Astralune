@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist --dotfiles --nojekyll"
+    "deploy": "npm run build && npx gh-pages -d dist --dotfiles --nojekyll"
   },
   "dependencies": {
     "phaser": "^4.2.1"

@@ -239,9 +239,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createControlsHint(): void {
-    const hintContainer = this.add.container(GAME_WIDTH - 210, GAME_HEIGHT - 35);
+    const hintContainer = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT - 35);
 
-    const bg = this.add.rectangle(0, 0, 390, 38, 0x100d20, 0.85);
+    const bg = this.add.rectangle(0, 0, 420, 38, 0x100d20, 0.85);
     bg.setStrokeStyle(1.5, 0x3d3567);
 
     const txt = this.add.text(
@@ -250,9 +250,9 @@ export class UIScene extends Phaser.Scene {
       { fontFamily: 'Outfit, sans-serif', fontSize: '12px', color: '#dcdde1' }
     ).setOrigin(0.5);
 
-    this.skillCdText = this.add.text(GAME_WIDTH - 430, GAME_HEIGHT - 35, '', {
+    this.skillCdText = this.add.text(GAME_WIDTH / 2 - 230, GAME_HEIGHT - 35, '', {
       fontFamily: 'Outfit, sans-serif', fontSize: '12px', fontStyle: 'bold', color: '#00cec9',
-    }).setOrigin(0.5);
+    }).setOrigin(1, 0.5);
 
     hintContainer.add([bg, txt]);
   }
@@ -290,10 +290,10 @@ export class UIScene extends Phaser.Scene {
     joyBase.on('pointerout', stopJoy);
     this.input.on('pointerup', stopJoy);
 
-    const rightMargin = GAME_WIDTH - 80;
-    const bottomMargin = GAME_HEIGHT - 80;
+    const rightMargin = GAME_WIDTH - 90;
+    const bottomMargin = GAME_HEIGHT - 85;
 
-    this.createTouchActionButton(rightMargin - 60, bottomMargin - 15, 'ATK\n[J]', '#ff4757', () => {
+    this.createTouchActionButton(rightMargin - 65, bottomMargin - 15, 'ATK\n[J]', '#ff4757', () => {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchAttack();
     });
 
@@ -301,7 +301,7 @@ export class UIScene extends Phaser.Scene {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchSkill();
     });
 
-    this.createTouchActionButton(rightMargin - 125, bottomMargin - 80, 'USE\n[E]', '#ffd32a', () => {
+    this.createTouchActionButton(rightMargin - 130, bottomMargin - 80, 'USE\n[E]', '#ffd32a', () => {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchInteract();
     });
 

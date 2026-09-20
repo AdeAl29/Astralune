@@ -18,26 +18,32 @@
       -webkit-touch-callout: none;
     }
     html, body {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
       overflow: hidden;
-      background: #0a0814;
+      background: #080614;
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
     }
     #game-container {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
       position: relative;
     }
-    canvas {
+    #game-container canvas {
       display: block;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 60px rgba(78, 56, 153, 0.2);
+      margin: 0 !important;
+      box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 70px rgba(108, 92, 231, 0.25);
       border-radius: 4px;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
