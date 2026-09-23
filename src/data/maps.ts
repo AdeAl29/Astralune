@@ -140,7 +140,7 @@ export const MAPS: Record<string, MapData> = {
         id: 'chest_forest_1',
         x: 900,
         y: 350,
-        itemId: 'astral_amulet',
+        itemId: 'star_amulet',
         quantity: 1,
       },
       {

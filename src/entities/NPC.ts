@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { NPCData } from '../types/game';
+import { IS_TOUCH } from '../utils/constants';
 import { distance } from '../utils/math';
 import { Player } from './Player';
 
@@ -19,12 +20,13 @@ export class NPC extends Phaser.Physics.Arcade.Sprite {
     body.setSize(32, 32);
     body.setOffset(8, 20);
 
-    // Floating Interaction Prompt [E]
+    // Floating Interaction Prompt
     this.promptGfx = scene.add.container(data.x, data.y - 42);
 
     const bg = scene.add.rectangle(0, 0, 56, 22, 0x131124, 0.85);
     bg.setStrokeStyle(1.5, 0x6c5ce7);
-    const text = scene.add.text(0, 0, '[E] Talk', {
+    const promptLabel = IS_TOUCH ? 'Talk' : '[E] Talk';
+    const text = scene.add.text(0, 0, promptLabel, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '11px',
       color: '#00cec9',
@@ -34,6 +36,20 @@ export class NPC extends Phaser.Physics.Arcade.Sprite {
 
     this.promptGfx.add([bg, text]);
     this.promptGfx.setVisible(false);
+
+    // Direct tap interaction for mobile
+    this.setInteractive({ useHandCursor: true });
+    const triggerInteract = () => {
+      if (this.canInteract()) {
+        const gameScene = this.scene as any;
+        if (typeof gameScene.handleInteract === 'function') {
+          gameScene.handleInteract();
+        }
+      }
+    };
+    this.on('pointerdown', triggerInteract);
+    bg.setInteractive({ useHandCursor: true });
+    bg.on('pointerdown', triggerInteract);
 
     // Subtle breathing/bobbing tween
     scene.tweens.add({

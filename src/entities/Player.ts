@@ -46,10 +46,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const totalSpeed = this.stats.speed + this.bonusStats.speed;
 
     if (dx !== 0 || dy !== 0) {
-      // Normalize diagonal speed
+      // Normalize speed while supporting analog stick tilt (0 to 1)
       const len = Math.sqrt(dx * dx + dy * dy);
-      const normX = dx / len;
-      const normY = dy / len;
+      const speedFactor = Math.min(1, len);
+      const normX = (dx / len) * speedFactor;
+      const normY = (dy / len) * speedFactor;
 
       body.setVelocity(normX * totalSpeed, normY * totalSpeed);
 
@@ -60,8 +61,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.facing = dy > 0 ? 'down' : 'up';
       }
 
-      // Procedural walking animation toggle
-      this.walkTimer += delta;
+      // Procedural walking animation toggle with speed-adjusted stepping
+      this.walkTimer += delta * (0.4 + 0.6 * speedFactor);
       if (this.walkTimer > 180) {
         this.walkTimer = 0;
         this.walkFrameIndex = this.walkFrameIndex === 1 ? 2 : 1;

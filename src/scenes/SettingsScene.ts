@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { AudioSystem } from '../systems/AudioSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { GameSettings } from '../types/game';
-import { GAME_HEIGHT, GAME_WIDTH } from '../utils/constants';
+import { GAME_HEIGHT, GAME_WIDTH, IS_PORTRAIT } from '../utils/constants';
 import { GameScene } from './GameScene';
 import { UIScene } from './UIScene';
 
@@ -27,62 +27,67 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   public create(): void {
-    const backdrop = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7);
+    const W = GAME_WIDTH;
+    const H = GAME_HEIGHT;
+
+    const backdrop = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7);
     backdrop.setInteractive();
 
-    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 600, 520, 0x120f26, 0.96);
+    const panelW = IS_PORTRAIT ? Math.min(520, W - 30) : 600;
+    const panelH = IS_PORTRAIT ? Math.min(560, H - 80) : 520;
+    const panel = this.add.rectangle(W / 2, H / 2, panelW, panelH, 0x120f26, 0.96);
     panel.setStrokeStyle(2.5, 0x6c5ce7);
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 220, 'SETTINGS', {
+    this.add.text(W / 2, H / 2 - panelH / 2 + 35, 'SETTINGS', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '26px',
+      fontSize: IS_PORTRAIT ? '22px' : '26px',
       fontStyle: 'bold',
       color: '#ffd32a',
     }).setOrigin(0.5);
 
-    const startY = GAME_HEIGHT / 2 - 140;
-    const spacing = 58;
+    const startY = H / 2 - panelH / 2 + 85;
+    const spacing = IS_PORTRAIT ? 50 : 58;
 
     // 1. Master Volume
-    this.createSliderRow(GAME_WIDTH / 2, startY, 'Master Volume', this.currentSettings.masterVolume, (val) => {
+    this.createSliderRow(W / 2, startY, 'Master Volume', this.currentSettings.masterVolume, panelW, (val) => {
       this.currentSettings.masterVolume = val;
       this.applyAndSave();
     });
 
     // 2. Music Volume
-    this.createSliderRow(GAME_WIDTH / 2, startY + spacing, 'Music Volume', this.currentSettings.musicVolume, (val) => {
+    this.createSliderRow(W / 2, startY + spacing, 'Music Volume', this.currentSettings.musicVolume, panelW, (val) => {
       this.currentSettings.musicVolume = val;
       this.applyAndSave();
     });
 
     // 3. SFX Volume
-    this.createSliderRow(GAME_WIDTH / 2, startY + spacing * 2, 'SFX Volume', this.currentSettings.sfxVolume, (val) => {
+    this.createSliderRow(W / 2, startY + spacing * 2, 'SFX Volume', this.currentSettings.sfxVolume, panelW, (val) => {
       this.currentSettings.sfxVolume = val;
       this.applyAndSave();
     });
 
     // 4. Screen Shake Toggle
-    this.createToggleRow(GAME_WIDTH / 2, startY + spacing * 3, 'Screen Shake', this.currentSettings.screenShake, (val) => {
+    this.createToggleRow(W / 2, startY + spacing * 3, 'Screen Shake', this.currentSettings.screenShake, panelW, (val) => {
       this.currentSettings.screenShake = val;
       this.applyAndSave();
     });
 
     // 5. Show Damage Numbers
-    this.createToggleRow(GAME_WIDTH / 2, startY + spacing * 4, 'Damage Numbers', this.currentSettings.showDamageNumbers, (val) => {
+    this.createToggleRow(W / 2, startY + spacing * 4, 'Damage Numbers', this.currentSettings.showDamageNumbers, panelW, (val) => {
       this.currentSettings.showDamageNumbers = val;
       this.applyAndSave();
     });
 
     // 6. Virtual Controls
-    this.createToggleRow(GAME_WIDTH / 2, startY + spacing * 5, 'Virtual Controls (Mobile)', this.currentSettings.virtualControls, (val) => {
+    this.createToggleRow(W / 2, startY + spacing * 5, 'Virtual Controls', this.currentSettings.virtualControls, panelW, (val) => {
       this.currentSettings.virtualControls = val;
       this.applyAndSave();
     });
 
     // Close / Back button
-    const backBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 220, '[ CLOSE & RETURN ]', {
+    const backBtn = this.add.text(W / 2, H / 2 + panelH / 2 - 30, '[ CLOSE & RETURN ]', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '16px',
+      fontSize: IS_PORTRAIT ? '14px' : '16px',
       fontStyle: 'bold',
       color: '#00cec9',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -112,29 +117,33 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private createSliderRow(
-    x: number,
+    centerX: number,
     y: number,
     label: string,
     initialVal: number,
+    panelW: number,
     onChange: (val: number) => void
   ): void {
-    this.add.text(x - 220, y, label, {
+    const labelX = centerX - panelW / 2 + 30;
+    const labelFontSize = IS_PORTRAIT ? '13px' : '15px';
+
+    this.add.text(labelX, y, label, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '15px',
+      fontSize: labelFontSize,
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0, 0.5);
 
-    const barW = 140;
+    const barW = IS_PORTRAIT ? 100 : 140;
     const barH = 10;
-    const barX = x + 70;
+    const barX = centerX + (IS_PORTRAIT ? 50 : 70);
 
     const bgBar = this.add.rectangle(barX, y, barW, barH, 0x2d3436).setInteractive({ useHandCursor: true });
     const fillBar = this.add.rectangle(barX - barW / 2, y, barW * initialVal, barH, 0x00cec9).setOrigin(0, 0.5);
 
-    const valText = this.add.text(barX + barW / 2 + 30, y, `${Math.round(initialVal * 100)}%`, {
+    const valText = this.add.text(barX + barW / 2 + 25, y, `${Math.round(initialVal * 100)}%`, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '13px',
+      fontSize: IS_PORTRAIT ? '11px' : '13px',
       color: '#ffd32a',
     }).setOrigin(0.5);
 
@@ -150,30 +159,34 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private createToggleRow(
-    x: number,
+    centerX: number,
     y: number,
     label: string,
     initialVal: boolean,
+    panelW: number,
     onToggle: (val: boolean) => void
   ): void {
-    this.add.text(x - 220, y, label, {
+    const labelX = centerX - panelW / 2 + 30;
+    const labelFontSize = IS_PORTRAIT ? '13px' : '15px';
+
+    this.add.text(labelX, y, label, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '15px',
+      fontSize: labelFontSize,
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0, 0.5);
 
     let isEnabled = initialVal;
-    const btnW = 90;
-    const btnH = 30;
-    const btnX = x + 110;
+    const btnW = IS_PORTRAIT ? 70 : 90;
+    const btnH = IS_PORTRAIT ? 26 : 30;
+    const btnX = centerX + (IS_PORTRAIT ? 80 : 110);
 
     const btnBg = this.add.rectangle(btnX, y, btnW, btnH, isEnabled ? 0x20bf6b : 0x4b4b4b).setInteractive({ useHandCursor: true });
     btnBg.setStrokeStyle(1.5, isEnabled ? 0x2ed573 : 0x718093);
 
     const btnText = this.add.text(btnX, y, isEnabled ? 'ON' : 'OFF', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '13px',
+      fontSize: IS_PORTRAIT ? '11px' : '13px',
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);

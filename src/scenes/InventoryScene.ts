@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { ITEMS } from '../data/items';
 import { AudioSystem } from '../systems/AudioSystem';
 import { Item } from '../types/game';
-import { GAME_HEIGHT, GAME_WIDTH } from '../utils/constants';
+import { GAME_HEIGHT, GAME_WIDTH, IS_PORTRAIT } from '../utils/constants';
 import { GameScene } from './GameScene';
 
 export class InventoryScene extends Phaser.Scene {
@@ -26,26 +26,31 @@ export class InventoryScene extends Phaser.Scene {
   public create(): void {
     this.gameScene = this.scene.get('GameScene') as GameScene;
 
+    const W = GAME_WIDTH;
+    const H = GAME_HEIGHT;
+
     // Dim background
-    const backdrop = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65);
+    const backdrop = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.65);
     backdrop.setInteractive();
 
     // Main window panel
-    const mainPanel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 920, 560, 0x120f26, 0.96);
+    const panelW = IS_PORTRAIT ? Math.min(680, W - 20) : 920;
+    const panelH = IS_PORTRAIT ? Math.min(1100, H - 40) : 560;
+    const mainPanel = this.add.rectangle(W / 2, H / 2, panelW, panelH, 0x120f26, 0.96);
     mainPanel.setStrokeStyle(2.5, 0x6c5ce7);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 245, 'INVENTORY & EQUIPMENT', {
+    this.add.text(W / 2, H / 2 - panelH / 2 + 30, 'INVENTORY & EQUIPMENT', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '24px',
+      fontSize: IS_PORTRAIT ? '18px' : '24px',
       fontStyle: 'bold',
       color: '#ffd32a',
     }).setOrigin(0.5);
 
     // Close button
-    const closeBtn = this.add.text(GAME_WIDTH / 2 + 420, GAME_HEIGHT / 2 - 245, '✕', {
+    const closeBtn = this.add.text(W / 2 + panelW / 2 - 25, H / 2 - panelH / 2 + 30, '✕', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '24px',
+      fontSize: IS_PORTRAIT ? '20px' : '24px',
       fontStyle: 'bold',
       color: '#ff4757',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -59,10 +64,18 @@ export class InventoryScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-I', closeAction);
     this.input.keyboard?.on('keydown-ESC', closeAction);
 
-    // Containers
-    this.itemsContainer = this.add.container(GAME_WIDTH / 2 - 210, GAME_HEIGHT / 2);
-    this.equipmentContainer = this.add.container(GAME_WIDTH / 2 - 210, GAME_HEIGHT / 2 + 155);
-    this.detailsContainer = this.add.container(GAME_WIDTH / 2 + 250, GAME_HEIGHT / 2);
+    // Layout containers
+    if (IS_PORTRAIT) {
+      // Portrait: items grid on top, equipment below, details at bottom
+      this.itemsContainer = this.add.container(W / 2, H / 2 - panelH / 2 + 160);
+      this.equipmentContainer = this.add.container(W / 2, H / 2 - panelH / 2 + 370);
+      this.detailsContainer = this.add.container(W / 2, H / 2 + panelH / 2 - 180);
+    } else {
+      // Landscape: items left, equipment bottom-left, details right
+      this.itemsContainer = this.add.container(W / 2 - 210, H / 2);
+      this.equipmentContainer = this.add.container(W / 2 - 210, H / 2 + 155);
+      this.detailsContainer = this.add.container(W / 2 + 250, H / 2);
+    }
 
     this.renderAll();
   }
@@ -77,13 +90,13 @@ export class InventoryScene extends Phaser.Scene {
     this.itemsContainer.removeAll(true);
 
     const slots = this.gameScene.inventorySystem.getSlots();
-    const cols = 6;
+    const cols = IS_PORTRAIT ? 5 : 6;
     const rows = 3;
-    const slotSize = 64;
-    const gap = 12;
+    const slotSize = IS_PORTRAIT ? 56 : 64;
+    const gap = IS_PORTRAIT ? 8 : 12;
 
     const startX = -((cols * (slotSize + gap) - gap) / 2) + slotSize / 2;
-    const startY = -120;
+    const startY = IS_PORTRAIT ? -60 : -120;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -102,15 +115,16 @@ export class InventoryScene extends Phaser.Scene {
           const itemDef = ITEMS[itemSlot.itemId];
           if (itemDef) {
             // Icon
+            const iconSize = IS_PORTRAIT ? 32 : 38;
             const icon = this.add.sprite(x, y - 4, itemDef.iconKey);
-            icon.setDisplaySize(38, 38);
+            icon.setDisplaySize(iconSize, iconSize);
             this.itemsContainer.add(icon);
 
             // Stack count
             if (itemSlot.quantity > 1) {
-              const qty = this.add.text(x + 24, y + 16, `${itemSlot.quantity}`, {
+              const qty = this.add.text(x + slotSize / 2 - 4, y + slotSize / 2 - 6, `${itemSlot.quantity}`, {
                 fontFamily: 'Outfit, sans-serif',
-                fontSize: '11px',
+                fontSize: IS_PORTRAIT ? '10px' : '11px',
                 fontStyle: 'bold',
                 color: '#ffffff',
                 stroke: '#000000',
@@ -142,23 +156,23 @@ export class InventoryScene extends Phaser.Scene {
     this.equipmentContainer.removeAll(true);
 
     const equip = this.gameScene.inventorySystem.getEquipment();
-    const slots: { label: string; key: 'weapon' | 'armor' | 'accessory'; id: string | null }[] = [
+    const slotsData: { label: string; key: 'weapon' | 'armor' | 'accessory'; id: string | null }[] = [
       { label: 'Weapon', key: 'weapon', id: equip.weapon },
       { label: 'Armor', key: 'armor', id: equip.armor },
       { label: 'Accessory', key: 'accessory', id: equip.accessory },
     ];
 
-    const slotSize = 64;
-    const gap = 36;
-    const startX = -((slots.length * (slotSize + gap) - gap) / 2) + slotSize / 2;
+    const slotSize = IS_PORTRAIT ? 56 : 64;
+    const gap = IS_PORTRAIT ? 24 : 36;
+    const startX = -((slotsData.length * (slotSize + gap) - gap) / 2) + slotSize / 2;
 
-    slots.forEach((s, i) => {
+    slotsData.forEach((s, i) => {
       const x = startX + i * (slotSize + gap);
       const y = 0;
 
-      const label = this.add.text(x, y - 44, s.label, {
+      const label = this.add.text(x, y - (IS_PORTRAIT ? 38 : 44), s.label, {
         fontFamily: 'Outfit, sans-serif',
-        fontSize: '12px',
+        fontSize: IS_PORTRAIT ? '10px' : '12px',
         fontStyle: 'bold',
         color: '#00cec9',
       }).setOrigin(0.5);
@@ -172,8 +186,9 @@ export class InventoryScene extends Phaser.Scene {
       if (s.id) {
         const itemDef = ITEMS[s.id];
         if (itemDef) {
+          const iconSize = IS_PORTRAIT ? 32 : 38;
           const icon = this.add.sprite(x, y, itemDef.iconKey);
-          icon.setDisplaySize(38, 38);
+          icon.setDisplaySize(iconSize, iconSize);
           this.equipmentContainer.add(icon);
 
           if (this.selectedItemId === s.id && this.selectedSlotType === 'equipment') {
@@ -195,8 +210,8 @@ export class InventoryScene extends Phaser.Scene {
   private renderDetails(): void {
     this.detailsContainer.removeAll(true);
 
-    const width = 340;
-    const height = 440;
+    const width = IS_PORTRAIT ? Math.min(420, GAME_WIDTH - 40) : 340;
+    const height = IS_PORTRAIT ? 280 : 440;
 
     const bg = this.add.rectangle(0, 0, width, height, 0x161230, 0.9);
     bg.setStrokeStyle(1.5, 0x3d3567);
@@ -205,7 +220,7 @@ export class InventoryScene extends Phaser.Scene {
     if (!this.selectedItemId) {
       const hint = this.add.text(0, 0, 'Select an item\nto view details', {
         fontFamily: 'Outfit, sans-serif',
-        fontSize: '16px',
+        fontSize: IS_PORTRAIT ? '14px' : '16px',
         color: '#718093',
         align: 'center',
       }).setOrigin(0.5);
@@ -216,30 +231,35 @@ export class InventoryScene extends Phaser.Scene {
     const item: Item = ITEMS[this.selectedItemId];
     if (!item) return;
 
+    const iconY = IS_PORTRAIT ? -95 : -145;
+    const nameY = IS_PORTRAIT ? -60 : -95;
+    const typeY = IS_PORTRAIT ? -42 : -70;
+    const descY = IS_PORTRAIT ? 0 : -10;
+
     // Item Icon Large
-    const iconLarge = this.add.sprite(0, -145, item.iconKey);
-    iconLarge.setDisplaySize(60, 60);
+    const iconLarge = this.add.sprite(0, iconY, item.iconKey);
+    iconLarge.setDisplaySize(IS_PORTRAIT ? 48 : 60, IS_PORTRAIT ? 48 : 60);
 
     // Item Name
-    const name = this.add.text(0, -95, item.name, {
+    const name = this.add.text(0, nameY, item.name, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '20px',
+      fontSize: IS_PORTRAIT ? '16px' : '20px',
       fontStyle: 'bold',
       color: '#ffd32a',
     }).setOrigin(0.5);
 
     // Item Type
-    const type = this.add.text(0, -70, item.type.toUpperCase(), {
+    const type = this.add.text(0, typeY, item.type.toUpperCase(), {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '12px',
+      fontSize: IS_PORTRAIT ? '10px' : '12px',
       color: '#00cec9',
       letterSpacing: 2,
     }).setOrigin(0.5);
 
     // Description
-    const desc = this.add.text(0, -10, item.description, {
+    const desc = this.add.text(0, descY, item.description, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '14px',
+      fontSize: IS_PORTRAIT ? '12px' : '14px',
       color: '#dcdde1',
       wordWrap: { width: width - 40 },
       align: 'center',
@@ -249,9 +269,13 @@ export class InventoryScene extends Phaser.Scene {
     this.detailsContainer.add([iconLarge, name, type, desc]);
 
     // Action Buttons
+    const actionBtnY1 = IS_PORTRAIT ? 60 : 80;
+    const actionBtnY2 = IS_PORTRAIT ? 105 : 140;
+    const actionBtnW = IS_PORTRAIT ? Math.min(170, width - 30) : 190;
+
     if (this.selectedSlotType === 'inventory') {
       if (item.type === 'consumable') {
-        const useBtn = this.createActionButton(0, 80, 'USE ITEM', '#2ed573', () => {
+        const useBtn = this.createActionButton(0, actionBtnY1, 'USE ITEM', '#2ed573', actionBtnW, () => {
           const used = this.gameScene.inventorySystem.useConsumable(item.id, this.gameScene.player.stats);
           if (used) {
             this.audio.playLevelUp();
@@ -261,7 +285,7 @@ export class InventoryScene extends Phaser.Scene {
         });
         this.detailsContainer.add(useBtn);
       } else if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
-        const equipBtn = this.createActionButton(0, 80, 'EQUIP', '#00cec9', () => {
+        const equipBtn = this.createActionButton(0, actionBtnY1, 'EQUIP', '#00cec9', actionBtnW, () => {
           this.gameScene.inventorySystem.equip(item.id);
           this.gameScene.syncStats();
           this.selectedSlotType = 'equipment';
@@ -270,14 +294,14 @@ export class InventoryScene extends Phaser.Scene {
         this.detailsContainer.add(equipBtn);
       }
 
-      const dropBtn = this.createActionButton(0, 140, 'DISCARD (1)', '#ff4757', () => {
+      const dropBtn = this.createActionButton(0, actionBtnY2, 'DISCARD (1)', '#ff4757', actionBtnW, () => {
         this.gameScene.inventorySystem.removeItem(item.id, 1);
         this.selectedItemId = null;
         this.renderAll();
       });
       this.detailsContainer.add(dropBtn);
     } else if (this.selectedSlotType === 'equipment' && this.selectedEquipSlot) {
-      const unequipBtn = this.createActionButton(0, 100, 'UNEQUIP', '#f1c40f', () => {
+      const unequipBtn = this.createActionButton(0, actionBtnY1 + 20, 'UNEQUIP', '#f1c40f', actionBtnW, () => {
         this.gameScene.inventorySystem.unequip(this.selectedEquipSlot!);
         this.gameScene.syncStats();
         this.selectedSlotType = 'inventory';
@@ -287,15 +311,16 @@ export class InventoryScene extends Phaser.Scene {
     }
   }
 
-  private createActionButton(x: number, y: number, text: string, color: string, onClick: () => void): Phaser.GameObjects.Container {
+  private createActionButton(x: number, y: number, text: string, color: string, width: number, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
-    const bg = this.add.rectangle(0, 0, 190, 38, 0x1e1938, 0.95);
+    const height = IS_PORTRAIT ? 34 : 38;
+    const bg = this.add.rectangle(0, 0, width, height, 0x1e1938, 0.95);
     bg.setStrokeStyle(1.5, Phaser.Display.Color.HexStringToColor(color).color);
     bg.setInteractive({ useHandCursor: true });
 
     const txt = this.add.text(0, 0, text, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '14px',
+      fontSize: IS_PORTRAIT ? '12px' : '14px',
       fontStyle: 'bold',
       color: '#ffffff',
     }).setOrigin(0.5);

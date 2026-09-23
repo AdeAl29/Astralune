@@ -471,7 +471,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleInteract(): void {
+  public handleInteract(): void {
     // 1. Check nearby Chests
     for (const chest of this.chests) {
       if (chest.canInteract()) {

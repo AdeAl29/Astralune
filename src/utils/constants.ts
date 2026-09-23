@@ -1,7 +1,28 @@
 import { GameSettings, PlayerStats } from '../types/game';
 
-export const GAME_WIDTH = 1280;
-export const GAME_HEIGHT = 720;
+/**
+ * Detect if the device is in portrait orientation.
+ * This is checked once at boot time to set the game resolution.
+ */
+export function isPortrait(): boolean {
+  return window.innerHeight > window.innerWidth;
+}
+
+/**
+ * Detect if the device supports touch input (mobile/tablet).
+ */
+export function isTouchDevice(): boolean {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+// Game resolution adapts to orientation:
+// Portrait (mobile): 720 x 1280
+// Landscape (desktop): 1280 x 720
+const _portrait = isPortrait();
+export const GAME_WIDTH = _portrait ? 720 : 1280;
+export const GAME_HEIGHT = _portrait ? 1280 : 720;
+export const IS_PORTRAIT = _portrait;
+export const IS_TOUCH = isTouchDevice();
 
 export const TILE_SIZE = 48;
 
@@ -36,7 +57,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   sfxVolume: 0.8,
   screenShake: true,
   showDamageNumbers: true,
-  virtualControls: false,
+  virtualControls: IS_TOUCH, // Auto-enable on touch devices
 };
 
 export const SAVE_KEY = 'echoes_rpg_save_v1';

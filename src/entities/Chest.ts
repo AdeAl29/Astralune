@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { ITEMS } from '../data/items';
 import { ChestData } from '../types/game';
+import { IS_TOUCH } from '../utils/constants';
 import { distance } from '../utils/math';
 import { Player } from './Player';
 
@@ -25,7 +26,8 @@ export class Chest extends Phaser.Physics.Arcade.Sprite {
     this.promptGfx = scene.add.container(data.x, data.y - 32);
     const bg = scene.add.rectangle(0, 0, 56, 20, 0x131124, 0.85);
     bg.setStrokeStyle(1.5, 0xfdcb6e);
-    const text = scene.add.text(0, 0, '[E] Open', {
+    const promptLabel = IS_TOUCH ? 'Open' : '[E] Open';
+    const text = scene.add.text(0, 0, promptLabel, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '11px',
       color: '#ffd32a',
@@ -35,6 +37,20 @@ export class Chest extends Phaser.Physics.Arcade.Sprite {
 
     this.promptGfx.add([bg, text]);
     this.promptGfx.setVisible(false);
+
+    // Direct tap interaction for mobile
+    this.setInteractive({ useHandCursor: true });
+    const triggerInteract = () => {
+      if (this.canInteract()) {
+        const gameScene = this.scene as any;
+        if (typeof gameScene.handleInteract === 'function') {
+          gameScene.handleInteract();
+        }
+      }
+    };
+    this.on('pointerdown', triggerInteract);
+    bg.setInteractive({ useHandCursor: true });
+    bg.on('pointerdown', triggerInteract);
   }
 
   public updateInteraction(player: Player): void {

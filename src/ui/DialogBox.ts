@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { AudioSystem } from '../systems/AudioSystem';
 import { DialogueLine } from '../types/game';
+import { GAME_WIDTH, IS_PORTRAIT } from '../utils/constants';
 
 export class DialogBox extends Phaser.GameObjects.Container {
   private panelBg: Phaser.GameObjects.Rectangle;
@@ -22,13 +23,26 @@ export class DialogBox extends Phaser.GameObjects.Container {
   private onFinishCallback?: (lastLine?: DialogueLine) => void;
   private audio: AudioSystem;
 
+  // Layout dimensions
+  private boxWidth: number;
+  private boxHeight: number;
+  private portraitSize: number;
+  private portraitX: number;
+
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
     this.audio = AudioSystem.getInstance();
 
-    const width = 880;
-    const height = 160;
+    // Responsive dimensions
+    this.boxWidth = IS_PORTRAIT ? Math.min(680, GAME_WIDTH - 30) : 880;
+    this.boxHeight = IS_PORTRAIT ? 140 : 160;
+    this.portraitSize = IS_PORTRAIT ? 90 : 114;
+    this.portraitX = -this.boxWidth / 2 + (IS_PORTRAIT ? 60 : 82);
+
+    const width = this.boxWidth;
+    const height = this.boxHeight;
+    const textStartX = -width / 2 + (IS_PORTRAIT ? 130 : 160);
 
     // Outer Glow / Border Panel
     this.panelBg = scene.add.rectangle(0, 0, width, height, 0x100d22, 0.94);
@@ -36,24 +50,25 @@ export class DialogBox extends Phaser.GameObjects.Container {
     this.panelBg.setInteractive();
 
     // Portrait Frame Background & Glow
-    this.portraitBorderGlow = scene.add.rectangle(-width / 2 + 82, 0, 126, 126);
+    this.portraitBorderGlow = scene.add.rectangle(this.portraitX, 0, this.portraitSize + 6, this.portraitSize + 6);
     this.portraitBorderGlow.setStrokeStyle(1.5, 0xa29bfe, 0.6);
 
-    this.portraitBorder = scene.add.rectangle(-width / 2 + 82, 0, 120, 120, 0x191238, 0.95);
+    this.portraitBorder = scene.add.rectangle(this.portraitX, 0, this.portraitSize, this.portraitSize, 0x191238, 0.95);
     this.portraitBorder.setStrokeStyle(2.5, 0xffd32a);
 
     // Portrait Sprite
-    this.portraitImg = scene.add.sprite(-width / 2 + 82, 0, 'portrait_mira');
-    this.portraitImg.setDisplaySize(114, 114);
+    this.portraitImg = scene.add.sprite(this.portraitX, 0, 'portrait_mira');
+    this.portraitImg.setDisplaySize(this.portraitSize - 6, this.portraitSize - 6);
 
     // Speaker Name Plate / Badge
-    this.nameBadge = scene.add.rectangle(-width / 2 + 160 + 65, -height / 2 + 25, 140, 26, 0x221345, 0.9);
+    const badgeX = textStartX + (IS_PORTRAIT ? 50 : 65);
+    this.nameBadge = scene.add.rectangle(badgeX, -height / 2 + 22, 140, 24, 0x221345, 0.9);
     this.nameBadge.setStrokeStyle(1.5, 0xffd32a, 0.9);
 
     // Speaker Name Tag
-    this.speakerText = scene.add.text(-width / 2 + 160 + 10, -height / 2 + 15, 'Mira', {
+    this.speakerText = scene.add.text(textStartX + 10, -height / 2 + 12, 'Mira', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '18px',
+      fontSize: IS_PORTRAIT ? '15px' : '18px',
       fontStyle: 'bold',
       color: '#ffd32a',
       stroke: '#000000',
@@ -61,18 +76,19 @@ export class DialogBox extends Phaser.GameObjects.Container {
     });
 
     // Content Dialogue Text
-    this.contentText = scene.add.text(-width / 2 + 160, -height / 2 + 52, '', {
+    this.contentText = scene.add.text(textStartX, -height / 2 + 42, '', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '17px',
+      fontSize: IS_PORTRAIT ? '14px' : '17px',
       color: '#f5f6fa',
-      wordWrap: { width: width - 200, useAdvancedWrap: true },
-      lineSpacing: 5,
+      wordWrap: { width: width - (IS_PORTRAIT ? 160 : 200), useAdvancedWrap: true },
+      lineSpacing: 4,
     });
 
-    // Advance Prompt [SPACE]
-    this.promptText = scene.add.text(width / 2 - 25, height / 2 - 18, '▼ [SPACE] / Click to Continue', {
+    // Advance Prompt
+    const promptLabel = IS_PORTRAIT ? '▼ Tap to Continue' : '▼ [SPACE] / Click to Continue';
+    this.promptText = scene.add.text(width / 2 - 15, height / 2 - 16, promptLabel, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '13px',
+      fontSize: IS_PORTRAIT ? '11px' : '13px',
       fontStyle: 'bold',
       color: '#00cec9',
     });
@@ -127,13 +143,14 @@ export class DialogBox extends Phaser.GameObjects.Container {
     }
 
     this.speakerText.setText(line.speaker);
-    const speakerWidth = Math.max(120, this.speakerText.width + 30);
-    this.nameBadge.setSize(speakerWidth, 26);
-    this.nameBadge.setPosition(-880 / 2 + 160 + speakerWidth / 2, -160 / 2 + 25);
+    const speakerWidth = Math.max(100, this.speakerText.width + 26);
+    this.nameBadge.setSize(speakerWidth, 24);
+    const textStartX = -this.boxWidth / 2 + (IS_PORTRAIT ? 130 : 160);
+    this.nameBadge.setPosition(textStartX + speakerWidth / 2, -this.boxHeight / 2 + 22);
 
     if (line.portraitKey && this.scene.textures.exists(line.portraitKey)) {
       this.portraitImg.setTexture(line.portraitKey);
-      this.portraitImg.setDisplaySize(114, 114);
+      this.portraitImg.setDisplaySize(this.portraitSize - 6, this.portraitSize - 6);
       this.portraitImg.setVisible(true);
       this.portraitBorder.setVisible(true);
       this.portraitBorderGlow.setVisible(true);

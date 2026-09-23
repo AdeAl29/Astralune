@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { AudioSystem } from '../systems/AudioSystem';
 import { SaveSystem } from '../systems/SaveSystem';
-import { GAME_HEIGHT, GAME_WIDTH } from '../utils/constants';
+import { GAME_HEIGHT, GAME_WIDTH, IS_PORTRAIT } from '../utils/constants';
 
 export class MainMenuScene extends Phaser.Scene {
   private audio: AudioSystem;
@@ -16,15 +16,18 @@ export class MainMenuScene extends Phaser.Scene {
   public create(): void {
     this.audio.playBgm('menu');
 
+    const W = GAME_WIDTH;
+    const H = GAME_HEIGHT;
+
     // Rich cosmic fantasy gradient background
     const bgGfx = this.add.graphics();
     bgGfx.fillGradientStyle(0x0f0c1b, 0x0f0c1b, 0x1f1738, 0x2c1f4d, 1);
-    bgGfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    bgGfx.fillRect(0, 0, W, H);
 
     // Floating astral particles
     for (let i = 0; i < 45; i++) {
-      const x = Math.random() * GAME_WIDTH;
-      const y = Math.random() * GAME_HEIGHT;
+      const x = Math.random() * W;
+      const y = Math.random() * H;
       const size = Math.random() * 3 + 1;
       const alpha = Math.random() * 0.6 + 0.2;
 
@@ -40,10 +43,15 @@ export class MainMenuScene extends Phaser.Scene {
       });
     }
 
+    // Title positioning
+    const titleY = IS_PORTRAIT ? H * 0.18 : 170;
+    const titleFontSize = IS_PORTRAIT ? '32px' : '44px';
+    const subtitleFontSize = IS_PORTRAIT ? '14px' : '18px';
+
     // Glowing Title Banner
-    const titleGlow = this.add.text(GAME_WIDTH / 2, 170, 'ECHOES OF THE\nFORGOTTEN REALM', {
+    const titleGlow = this.add.text(W / 2, titleY + 2, 'ECHOES OF THE\nFORGOTTEN REALM', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '44px',
+      fontSize: titleFontSize,
       fontStyle: 'bold',
       color: '#6c5ce7',
       align: 'center',
@@ -51,9 +59,9 @@ export class MainMenuScene extends Phaser.Scene {
     titleGlow.setOrigin(0.5);
     titleGlow.setAlpha(0.35);
 
-    const title = this.add.text(GAME_WIDTH / 2, 168, 'ECHOES OF THE\nFORGOTTEN REALM', {
+    const title = this.add.text(W / 2, titleY, 'ECHOES OF THE\nFORGOTTEN REALM', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '44px',
+      fontSize: titleFontSize,
       fontStyle: 'bold',
       color: '#ffd32a',
       stroke: '#1e1b2e',
@@ -62,28 +70,31 @@ export class MainMenuScene extends Phaser.Scene {
     });
     title.setOrigin(0.5);
 
-    const subtitle = this.add.text(GAME_WIDTH / 2, 250, '— 2D Action RPG Adventure —', {
+    const subtitleY = IS_PORTRAIT ? titleY + 70 : 250;
+    const subtitle = this.add.text(W / 2, subtitleY, '— 2D Action RPG Adventure —', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '18px',
+      fontSize: subtitleFontSize,
       color: '#00cec9',
       letterSpacing: 3,
     });
     subtitle.setOrigin(0.5);
 
     // Menu Buttons
-    const startY = 340;
-    const spacing = 64;
+    const startY = IS_PORTRAIT ? H * 0.38 : 340;
+    const spacing = IS_PORTRAIT ? 56 : 64;
     const hasSave = this.saveSystem.hasSave();
+    const btnW = IS_PORTRAIT ? Math.min(280, W - 60) : 260;
 
-    this.createMenuButton(GAME_WIDTH / 2, startY, 'NEW GAME', () => {
+    this.createMenuButton(W / 2, startY, 'NEW GAME', btnW, () => {
       this.audio.playUiClick();
       this.scene.start('IntroScene');
     });
 
     this.createMenuButton(
-      GAME_WIDTH / 2,
+      W / 2,
       startY + spacing,
       'CONTINUE',
+      btnW,
       () => {
         if (!hasSave) return;
         this.audio.playUiClick();
@@ -93,20 +104,20 @@ export class MainMenuScene extends Phaser.Scene {
       !hasSave
     );
 
-    this.createMenuButton(GAME_WIDTH / 2, startY + spacing * 2, 'SETTINGS', () => {
+    this.createMenuButton(W / 2, startY + spacing * 2, 'SETTINGS', btnW, () => {
       this.audio.playUiClick();
       this.scene.launch('SettingsScene', { returnTo: 'MainMenuScene' });
     });
 
-    this.createMenuButton(GAME_WIDTH / 2, startY + spacing * 3, 'CREDITS', () => {
+    this.createMenuButton(W / 2, startY + spacing * 3, 'CREDITS', btnW, () => {
       this.audio.playUiClick();
       this.showCreditsModal();
     });
 
     // Version Tag
-    const ver = this.add.text(GAME_WIDTH - 20, GAME_HEIGHT - 20, 'v1.0.0 — Production Build', {
+    const ver = this.add.text(W - 16, H - 16, 'v1.0.0 — Production Build', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '13px',
+      fontSize: IS_PORTRAIT ? '11px' : '13px',
       color: '#718093',
     });
     ver.setOrigin(1, 1);
@@ -116,19 +127,19 @@ export class MainMenuScene extends Phaser.Scene {
     x: number,
     y: number,
     text: string,
+    width: number,
     onClick: () => void,
     isDisabled: boolean = false
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
-    const width = 260;
-    const height = 48;
+    const height = IS_PORTRAIT ? 44 : 48;
 
     const bg = this.add.rectangle(0, 0, width, height, isDisabled ? 0x1a1a26 : 0x1e1938, isDisabled ? 0.4 : 0.85);
     bg.setStrokeStyle(2, isDisabled ? 0x3d3555 : 0x6c5ce7);
 
     const label = this.add.text(0, 0, text, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '18px',
+      fontSize: IS_PORTRAIT ? '16px' : '18px',
       fontStyle: 'bold',
       color: isDisabled ? '#57606f' : '#ffffff',
     });
@@ -163,40 +174,46 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private showCreditsModal(): void {
-    const modal = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    const W = GAME_WIDTH;
+    const H = GAME_HEIGHT;
+    const modal = this.add.container(W / 2, H / 2);
     modal.setDepth(100);
 
-    const backdrop = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7);
+    const backdrop = this.add.rectangle(0, 0, W, H, 0x000000, 0.7);
     backdrop.setInteractive();
 
-    const panel = this.add.rectangle(0, 0, 520, 320, 0x131124, 0.96);
+    const panelW = IS_PORTRAIT ? Math.min(460, W - 40) : 520;
+    const panelH = IS_PORTRAIT ? 300 : 320;
+
+    const panel = this.add.rectangle(0, 0, panelW, panelH, 0x131124, 0.96);
     panel.setStrokeStyle(2, 0x6c5ce7);
 
-    const title = this.add.text(0, -110, 'CREDITS', {
+    const creditTitle = this.add.text(0, -panelH / 2 + 30, 'CREDITS', {
       fontFamily: 'Cinzel, Georgia, serif',
-      fontSize: '26px',
+      fontSize: IS_PORTRAIT ? '22px' : '26px',
       fontStyle: 'bold',
       color: '#ffd32a',
     });
-    title.setOrigin(0.5);
+    creditTitle.setOrigin(0.5);
 
     const desc = this.add.text(
       0,
-      -10,
+      0,
       'Echoes of the Forgotten Realm\n\nDeveloped with Phaser 4 & TypeScript\nGame Design & Audio Synthesis: AI Pair Programmer\nEngine: Phaser Arcade Physics & Web Audio API\nDedicated to Classic 2D Indie Action RPGs',
       {
         fontFamily: 'Outfit, sans-serif',
-        fontSize: '16px',
+        fontSize: IS_PORTRAIT ? '13px' : '16px',
         color: '#dcdde1',
         align: 'center',
         lineSpacing: 6,
+        wordWrap: { width: panelW - 50 },
       }
     );
     desc.setOrigin(0.5);
 
-    const closeBtn = this.add.text(0, 110, '[ CLOSE ]', {
+    const closeBtn = this.add.text(0, panelH / 2 - 30, '[ CLOSE ]', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '17px',
+      fontSize: IS_PORTRAIT ? '15px' : '17px',
       fontStyle: 'bold',
       color: '#00cec9',
     });
@@ -211,6 +228,6 @@ export class MainMenuScene extends Phaser.Scene {
     closeBtn.on('pointerdown', closeAction);
     backdrop.on('pointerdown', closeAction);
 
-    modal.add([backdrop, panel, title, desc, closeBtn]);
+    modal.add([backdrop, panel, creditTitle, desc, closeBtn]);
   }
 }

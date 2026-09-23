@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="screen-orientation" content="portrait" />
   <title>Echoes of the Forgotten Realm — 2D Action RPG</title>
   <meta name="description" content="An anime-inspired 2D top-down action RPG web game built with Phaser 4 and TypeScript. Explore Whispering Meadow, Moonlit Forest, and Ancient Ruins." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,10 +20,12 @@
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
     }
     html, body {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -28,10 +34,15 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
     #game-container {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
