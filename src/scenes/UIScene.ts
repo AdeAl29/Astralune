@@ -116,12 +116,8 @@ export class UIScene extends Phaser.Scene {
       this.hudExpBarH = 10;
     }
 
-    // Joystick origin
-    if (IS_PORTRAIT) {
-      this.joyOrigin = { x: 110, y: GAME_HEIGHT - 180 };
-    } else {
-      this.joyOrigin = { x: 120, y: GAME_HEIGHT - 120 };
-    }
+    // Joystick origin for landscape mobile
+    this.joyOrigin = { x: 135, y: GAME_HEIGHT - 135 };
   }
 
   private createPlayerHUD(): void {
@@ -199,14 +195,14 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createTopRightHUD(): void {
-    const btnSize = IS_PORTRAIT ? 32 : 36;
-    const iconFontSize = IS_PORTRAIT ? '14px' : '16px';
-    const coinFontSize = IS_PORTRAIT ? '14px' : '16px';
+    const btnSize = 36;
+    const iconFontSize = '16px';
+    const coinFontSize = '16px';
 
     // Coin display
-    const coinBgW = IS_PORTRAIT ? 90 : 110;
-    const coinBgX = GAME_WIDTH - (IS_PORTRAIT ? 170 : 210);
-    const coinBgY = IS_PORTRAIT ? 30 : 36;
+    const coinBgW = 100;
+    const coinBgX = GAME_WIDTH - 250;
+    const coinBgY = 36;
 
     const coinBg = this.add.rectangle(coinBgX, coinBgY, coinBgW, 30, 0x100d20, 0.88);
     coinBg.setStrokeStyle(1.5, 0xfdcb6e);
@@ -219,21 +215,36 @@ export class UIScene extends Phaser.Scene {
       color: '#ffd32a',
     });
 
-    // Header buttons
+    // Header buttons (Bag, Quests, Fullscreen, Pause)
     const btnY = coinBgY;
-    const btnGap = IS_PORTRAIT ? 38 : 47;
+    const btnGap = 45;
 
-    this.createHeaderButton(GAME_WIDTH - btnGap * 2 - 10, btnY, '🎒', () => {
+    this.createHeaderButton(GAME_WIDTH - btnGap * 3 - 10, btnY, '🎒', () => {
       if (this.gameScene?.openInventory) this.gameScene.openInventory();
     });
 
-    this.createHeaderButton(GAME_WIDTH - btnGap - 10, btnY, '📜', () => {
+    this.createHeaderButton(GAME_WIDTH - btnGap * 2 - 10, btnY, '📜', () => {
       if (this.gameScene?.openQuests) this.gameScene.openQuests();
+    });
+
+    this.createHeaderButton(GAME_WIDTH - btnGap - 10, btnY, '⛶', () => {
+      this.toggleFullscreen();
     });
 
     this.createHeaderButton(GAME_WIDTH - 10 - btnSize / 2, btnY, '❚❚', () => {
       if (this.gameScene?.pauseGame) this.gameScene.pauseGame();
     });
+  }
+
+  private toggleFullscreen(): void {
+    if (this.scale.isFullscreen) {
+      this.scale.stopFullscreen();
+    } else {
+      this.scale.startFullscreen();
+      if (screen.orientation && (screen.orientation as any).lock) {
+        (screen.orientation as any).lock('landscape').catch(() => {});
+      }
+    }
   }
 
   private createHeaderButton(
@@ -341,19 +352,15 @@ export class UIScene extends Phaser.Scene {
   private createMobileControls(): void {
     this.touchContainer = this.add.container(0, 0);
 
-    // Joystick Base
+    // Joystick Base (scaled and positioned for comfortable left thumb in landscape)
     const joyBase = this.add.sprite(this.joyOrigin.x, this.joyOrigin.y, 'ui_joy_base');
     joyBase.setInteractive();
-    joyBase.setAlpha(0.7);
+    joyBase.setAlpha(0.72);
+    joyBase.setScale(1.25);
 
     this.joyThumb = this.add.sprite(this.joyOrigin.x, this.joyOrigin.y, 'ui_joy_thumb');
-    this.joyThumb.setAlpha(0.8);
-
-    // Make joystick bigger on portrait for easier touch
-    if (IS_PORTRAIT) {
-      joyBase.setScale(1.1);
-      this.joyThumb.setScale(1.1);
-    }
+    this.joyThumb.setAlpha(0.85);
+    this.joyThumb.setScale(1.25);
 
     joyBase.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       this.isJoyDragging = true;
@@ -377,50 +384,42 @@ export class UIScene extends Phaser.Scene {
     };
 
     joyBase.on('pointerup', stopJoy);
-    // Don't stop on pointerout to avoid stuck joystick — only stop on global pointerup
     this.input.on('pointerup', stopJoy);
 
-    // Action buttons — positioned for portrait layout
-    const btnRadius = IS_PORTRAIT ? 36 : 32;
-    let rightMargin: number;
-    let bottomMargin: number;
+    // Mobile Legends Arc Action Buttons layout for right thumb
+    const atkRadius = 42;
+    const skillRadius = 35;
+    const useRadius = 33;
 
-    if (IS_PORTRAIT) {
-      rightMargin = GAME_WIDTH - 100;
-      bottomMargin = GAME_HEIGHT - 200;
-    } else {
-      rightMargin = GAME_WIDTH - 90;
-      bottomMargin = GAME_HEIGHT - 85;
-    }
-
-    const atkBtnX = IS_PORTRAIT ? rightMargin - 50 : rightMargin - 65;
-    const atkBtnY = IS_PORTRAIT ? bottomMargin + 20 : bottomMargin - 15;
-    this.createTouchActionButton(atkBtnX, atkBtnY, 'ATK', '#ff4757', btnRadius, () => {
+    // 1. Primary Attack Button (Main large button at natural resting position)
+    const atkBtnX = GAME_WIDTH - 110;
+    const atkBtnY = GAME_HEIGHT - 105;
+    this.createTouchActionButton(atkBtnX, atkBtnY, 'ATK', '#ff4757', atkRadius, () => {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchAttack();
     });
 
-    const skillBtnX = IS_PORTRAIT ? rightMargin + 20 : rightMargin;
-    const skillBtnY = IS_PORTRAIT ? bottomMargin - 50 : bottomMargin - 85;
-    this.createTouchActionButton(skillBtnX, skillBtnY, 'SKILL', '#00cec9', btnRadius, () => {
+    // 2. Arc Burst Skill Button (Positioned above attack button)
+    const skillBtnX = GAME_WIDTH - 65;
+    const skillBtnY = GAME_HEIGHT - 200;
+    this.createTouchActionButton(skillBtnX, skillBtnY, 'SKILL', '#00cec9', skillRadius, () => {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchSkill();
     });
 
-    const useBtnX = IS_PORTRAIT ? rightMargin - 120 : rightMargin - 130;
-    const useBtnY = IS_PORTRAIT ? bottomMargin - 45 : bottomMargin - 80;
-    this.createTouchActionButton(useBtnX, useBtnY, 'USE', '#ffd32a', btnRadius, () => {
+    // 3. Interact / Use Button (Positioned to the left of attack button)
+    const useBtnX = GAME_WIDTH - 210;
+    const useBtnY = GAME_HEIGHT - 125;
+    this.createTouchActionButton(useBtnX, useBtnY, 'USE', '#ffd32a', useRadius, () => {
       if (this.gameScene?.inputSystem) this.gameScene.inputSystem.triggerTouchInteract();
     });
 
-    // Skill cooldown text for mobile (positioned near skill button)
-    if (IS_TOUCH) {
-      this.skillCdText = this.add.text(skillBtnX, skillBtnY - btnRadius - 12, '', {
-        fontFamily: 'Outfit, sans-serif', fontSize: '11px', fontStyle: 'bold', color: '#00cec9',
-      }).setOrigin(0.5);
-    }
+    // Skill cooldown text for mobile
+    this.skillCdText = this.add.text(skillBtnX, skillBtnY - skillRadius - 14, '', {
+      fontFamily: 'Outfit, sans-serif', fontSize: '11px', fontStyle: 'bold', color: '#00cec9',
+    }).setOrigin(0.5);
 
-    this.touchContainer.add([joyBase, this.joyThumb]);
+    this.touchContainer.add([joyBase, this.joyThumb, this.skillCdText]);
 
-    // Show touch controls on touch devices or if setting is on
+    // Show touch controls on touch devices or if virtual controls setting is on
     const shouldShow =
       this.gameScene?.settings?.virtualControls ||
       IS_TOUCH;
@@ -429,7 +428,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private handleJoyMove(x: number, y: number): void {
-    const maxRadius = IS_PORTRAIT ? 50 : 45;
+    const maxRadius = 55;
     const dx = x - this.joyOrigin.x;
     const dy = y - this.joyOrigin.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -455,12 +454,12 @@ export class UIScene extends Phaser.Scene {
     x: number, y: number, label: string, color: string, radius: number, onPress: () => void
   ): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
-    const bg = this.add.circle(0, 0, radius, 0x181432, 0.8);
-    bg.setStrokeStyle(2.5, Phaser.Display.Color.HexStringToColor(color).color);
+    const bg = this.add.circle(0, 0, radius, 0x181432, 0.85);
+    bg.setStrokeStyle(3, Phaser.Display.Color.HexStringToColor(color).color);
     bg.setInteractive();
 
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'Outfit, sans-serif', fontSize: IS_PORTRAIT ? '14px' : '13px', fontStyle: 'bold', color: '#ffffff', align: 'center',
+      fontFamily: 'Outfit, sans-serif', fontSize: radius >= 40 ? '16px' : '13px', fontStyle: 'bold', color: '#ffffff', align: 'center',
     }).setOrigin(0.5);
 
     bg.on('pointerdown', () => { c.setScale(0.92); onPress(); });

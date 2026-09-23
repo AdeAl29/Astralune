@@ -15,13 +15,10 @@ export function isTouchDevice(): boolean {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
-// Game resolution adapts to orientation:
-// Portrait (mobile): 720 x 1280
-// Landscape (desktop): 1280 x 720
-const _portrait = isPortrait();
-export const GAME_WIDTH = _portrait ? 720 : 1280;
-export const GAME_HEIGHT = _portrait ? 1280 : 720;
-export const IS_PORTRAIT = _portrait;
+// Fixed landscape widescreen resolution (16:9) like Mobile Legends / MOBA
+export const GAME_WIDTH = 1280;
+export const GAME_HEIGHT = 720;
+export const IS_PORTRAIT = false;
 export const IS_TOUCH = isTouchDevice();
 
 export const TILE_SIZE = 48;

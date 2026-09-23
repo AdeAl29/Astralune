@@ -6,7 +6,9 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="screen-orientation" content="portrait" />
+  <meta name="screen-orientation" content="landscape" />
+  <meta name="x5-orientation" content="landscape" />
+  <meta name="x5-fullscreen" content="true" />
   <title>Echoes of the Forgotten Realm — 2D Action RPG</title>
   <meta name="description" content="An anime-inspired 2D top-down action RPG web game built with Phaser 4 and TypeScript. Explore Whispering Meadow, Moonlit Forest, and Ancient Ruins." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,10 +61,155 @@
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+
+    /* Rotate Device Prompt (Shown only on portrait mobile screens) */
+    #rotate-prompt {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #1b1238 0%, #070512 100%);
+      z-index: 999999;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      color: #ffffff;
+      backdrop-filter: blur(10px);
+    }
+    @media screen and (orientation: portrait) and (max-width: 900px) {
+      #rotate-prompt {
+        display: flex;
+      }
+    }
+    .rotate-card {
+      max-width: 340px;
+      background: rgba(18, 14, 38, 0.85);
+      border: 1.5px solid #6c5ce7;
+      border-radius: 20px;
+      padding: 30px 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(108, 92, 231, 0.3);
+    }
+    .rotate-phone-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 18px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .phone-shape {
+      width: 32px;
+      height: 52px;
+      border: 3px solid #00cec9;
+      border-radius: 7px;
+      position: relative;
+      animation: rotatePhone 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      box-shadow: 0 0 16px rgba(0, 206, 201, 0.45);
+    }
+    .phone-shape::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #00cec9;
+    }
+    @keyframes rotatePhone {
+      0%, 20% { transform: rotate(0deg); }
+      50%, 75% { transform: rotate(90deg); }
+      95%, 100% { transform: rotate(0deg); }
+    }
+    .rotate-card h2 {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffd32a;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .rotate-card p {
+      font-size: 13px;
+      color: #dcdde1;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .rotate-card .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #00cec9;
+      background: rgba(0, 206, 201, 0.15);
+      border: 1px solid rgba(0, 206, 201, 0.4);
+      border-radius: 20px;
+      padding: 4px 12px;
+      margin-bottom: 14px;
+    }
+    .fs-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      border: none;
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+      transition: transform 0.15s ease;
+    }
+    .fs-btn:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
+  <div id="rotate-prompt">
+    <div class="rotate-card">
+      <div class="rotate-phone-icon">
+        <div class="phone-shape"></div>
+      </div>
+      <span class="badge">🎮 Mobile Legends Style</span>
+      <h2>Putar HP ke Landscape</h2>
+      <p>Miringkan HP Anda ke posisi horizontal (landscape) untuk mengaktifkan kontrol analog dan tombol skill penuh.</p>
+      <button id="fullscreen-btn" class="fs-btn" type="button">Layar Penuh (Fullscreen) ⛶</button>
+    </div>
+  </div>
+
   <div id="game-container"></div>
   <script type="module" src="/src/main.ts"></script>
+  <script>
+    // Fullscreen helper
+    const fsBtn = document.getElementById('fullscreen-btn');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        const el = document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      });
+    }
+
+    // Refresh layout on rotation
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 200);
+    });
+  </script>
 </body>
 </html>
